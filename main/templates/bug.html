@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block pagecontent %}
+<div class="modal" id="bugowner" tabindex="-1">
+    <div class="modal-dialog">
+       	<div class="modal-content">
+            <form method="POST">
+                <div class="modal-header">
+                    <h3 class="modal-title">Change bug owner</h3>
+                    <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <label for="bugOwner" class="form-label">New bug owner</label>
+                    <select class="form-control" id="bugOwner" name="owner">
+                        {% for item in people %}
+                        <option value="{{item.id}}">{{item.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-dismissible fade show {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}alert-danger{% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}alert-success{% endif %}">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
+    {% endfor %}
+{% endif %}
+<h2>{{ bug.title }} <span class="text-muted">#{{ bug.id }}</span>{% if not bug.closed %} <a href="/closebug/{{bug.id}}" class="btn btn-danger">Close</a>{% endif %}</h2>
+<div class="mb-3">{% if bug.closed %}
+    <span class="badge bg-danger">Closed</span>
+{% else %}
+    <span class="badge bg-success">Open</span>
+{% endif %} 
+     <a href="#" data-bs-toggle="modal" data-bs-target="#bugowner"><b>{{ bug.owner }}</b></a> opened this bug <span title="{{ bug.created }}">{{ bug.created|naturaltime }}</span>
+</div>
+<div class="card">
+    <div class="card-body">{{ bug.text }}</div>
+</div>
+{% endblock %}

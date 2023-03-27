@@ -1,0 +1,213 @@
+Bug tracker
+===========
+
+This simple bug tracker is built primarily in Django, with Django Rest
+Framework used to build the API, Bootstrap used to style the front end, and a
+choice of standalone SQLite and dockerised PostgreSQL configurations. It is
+assumed that Python 3 and (optionally) Docker are installed and working on the
+target machine.
+
+Django requires a secret key which is used for a variety of cryptographic
+purposes, e.g. signing session cookies. For local testing, any string can be
+used but for production a random key should be generated. The provided
+condifurations will read the key from the environment or .env files.
+
+SETUP
+-----
+
+Standalone:
+This configuration uses the built-in Django web server and SQLite. It is not
+suitable for public or production use, but is meant for quick local testing.
+
+Create and activate a Python virtual environment by running "python3 -m venv
+airevenv" followed by ". airevenv/bin/activate"
+Install the necessary libraries into the venv with "pip3 install -r
+requirements.txt"
+Add a secret key to the environment by "export SECRET_KEY=some_string"
+Create the SQLite database for the tool by running "./manage.py migrate"
+Optionally, run the supplied tests with "./manage.py test" - they should all
+pass.
+Run the built-in Django web server with "./manage.py runserver"
+The tracking tool will then be available at http://127.0.0.1:8000 - at the
+message should say, control-C will stop the server
+
+Simple docker configuration:
+This configuration uses the built-in Django web server and PostgreSQL, running
+in docker containers. It is also not suitable for production use.
+
+Build and run the docker setup with "docker-compose up --build -d"
+Create the initial databae with "docker-compose exec web python manage.py
+migrate"
+Optionally run the supplied tests within the container with "docker-compose
+exec web python manage.py test" - they should all pass.
+The tracking tool will then be available at http://127.0.0.1:8000
+To temporarily disable the tool, run "docker-compose down"
+To re-enable the tool, run "docker-compose up"
+To disable the tool and delete all data, run "docker-compose down -v"
+
+Complex docker configuration:
+This configuration uses the gunicorn and nginx servers to run the tool with
+PostgreSQL in Docker containers. It is a more complete and production-like
+configuration than the others supplied.
+
+Build and run the docker setup with "docker-compose -f docker-compose.prod.yml
+up --build -d"
+Create the initial database with "docker-compose -f docker-compose.prod.yml
+exec web python manage.py migrate"
+Optionally run the supplied tests with "docker-compose -f
+docker-compose.prod.yml exec web python manage.py test"
+The tracking tool will then be available at http://127.0.0.1:1337 - note the
+different port number from the other configurations.
+To temporarily disable the tool, run "docker-compose -f
+docker-compose.prod.yml down"
+To re-enable the tool, run "docker-compose -f docker-compose.prod.yml up"
+To disable the tool and delete all data, run "docker-compose -f
+docker-compose.prod.yml down -v"
+
+NOTES
+-----
+
+The supplied production-like configuration is not fully suitable for
+production use without manual adjustment - in particular, it would need to be
+configured to accept connections with a hostname, using SSL, and probably on
+port 80. The system also has no authentication, which would be needed for any
+public access.
+
+The design is functional rather than beautiful.
+
+USAGE
+-----
+
+There are two tabs on the front page, one shows a list of bugs, one a list of
+people. To create a bug, first switch to the People tab and create a person by
+tying their name into the box and clicking the green 'add person' button.
+Switch back to the Bugs tab and click the 'New bug' button. Enter a title and
+details for the bug, and choose an owner from the drop-down list. Click
+"Create bug" to save the new bug.
+Return to the homepage by clicking "Bug tracker" at the top of the page, and
+the new bug will be visible on the bug list. Click the bug ID to return to the
+bug details page.
+On this page, you can close the bug by clicking the red "Close" button, or
+change the owner of the bug by clicking the existing owner's name - this will
+pop up a list of all registered people, and clicking save will update the bug.
+Moving the mouse over the approximate opening time shown will a tooltip with
+the exact time.
+Clicking the small edit button next to a person's name on the People tab will
+allow changing the name of the person - press return to save the change. Name
+changes will apply to any bugs owned by that person immediately.
+
+API
+---
+
+The API has 4 endpoints:
+
+/api/people
+    GET
+    Returns a list of people:
+    [
+        {
+            "id": 2,
+            "name": "Fred"
+        },
+        {
+            "id": 1,
+            "name": "Andrew"
+        }
+    ]
+
+/api/person
+    POST
+    "name" parameter
+    Create a new person with that name, returns:
+    {
+        "id": 3,
+        "name": "Richard"
+    }
+
+/api/person/<personid>
+    Returns HTTP status 404 if the personid does not exist.
+
+    GET
+    Returns a specific person:
+    {
+        "id": 3,
+        "name": "Richard"
+    }
+
+    POST
+    "name" parameter
+    Update a person:
+    {
+        "id": 3,
+        "name": "Edward"
+    }
+    DELETE
+    Delete a person and their bugs:
+    No body in response, HTTP response code 204 for success
+
+/api/bugs
+    GET
+    Return a list of bugs:
+    [
+        {
+            "closed": true,
+            "created": "2023-03-26T15:41:41.430719Z",
+            "id": 3,
+            "owner": 1,
+            "text": "This is another bug",
+            "title": "A closed bug"
+        },
+        {
+            "closed": true,
+            "created": "2023-03-26T15:20:53.325726Z",
+            "id": 1,
+            "owner": 2,
+            "text": "Some details",
+            "title": "A bug"
+        }
+    ]
+
+/api/bug
+    POST
+    "title", "text" and "owner" parameters - "owner" should be the ID returned
+    from the /api/people endpoint.
+    Create a bug, returns:
+    {
+        "closed": false,
+        "created": "2023-03-26T15:42:56.300591Z",
+        "id": 4,
+        "owner": 2,
+        "text": "This is a bug I created using the API",
+        "title": "A created bug"
+    }
+
+/api/bug/<bugid>
+    Returns HTTP status 404 if the bug does not exist.
+
+    GET
+    Returns a specific bug:
+    {
+        "closed": false,
+        "created": "2023-03-26T15:42:56.300591Z",
+        "id": 4,
+        "owner": 2,
+        "text": "This is a bug I created using the API",
+        "title": "A created bug"
+    }
+    
+    POST
+    "title", "text", "owner" fields are required, "closed" is optional, either
+    "True" or "False"
+    Update the details of a specific bug:
+    {
+        "closed": true,
+        "created": "2023-03-26T15:42:56.300591Z",
+        "id": 4,
+        "owner": 2,
+        "text": "This is a bug I created using the API",
+        "title": "A created bug"
+    }
+
+    DELETE
+    Delete a bug
+    No body in response, HTTP response code 204 for success

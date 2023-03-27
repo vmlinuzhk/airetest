@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+  web:
+    build: ./
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./:/usr/src/airelogic/
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env.dev
+  db:
+    image: postgres:13.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=airelogic
+      - POSTGRES_PASSWORD=airelogic
+      - POSTGRES_DB=airelogic_dev
+
+volumes:
+  postgres_data:

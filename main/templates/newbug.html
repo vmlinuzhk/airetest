@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block pagecontent %}
+<h1>New Bug</h1>
+{{ form.non_field_errors }}
+<form method="POST">
+    {% csrf_token %}
+    <div class="mb-3{% if form.title.errors %} text-danger{% endif %}">
+        <label for="bugTitle" class="form-label">Bug title</label>
+	<input type="text" class="form-control" id="bugTitle" name="title" placeholder="Short bug description here"{% if form.title.value %} value="{{form.title.value}}"{% endif %}>
+        <div class="form-text text-danger">{{ form.title.errors }}</div>
+    </div>
+    <div class="mb-3{% if form.owner.errors %} text-danger{% endif %}">
+         <label for="bugOwner" class="form-label">Bug owner</label>
+	 <select class="form-control" id="bugOwner" name="owner">
+            {% for item in form.owner.field.choices %}
+	    <option value="{{item.0}}"{% if form.owner.value|add:"0" == item.0 %} selected{% endif %}>{{item.1}}</option>
+	    {% endfor %}
+	 </select>
+        <div class="form-text text-danger">{{ form.owner.errors }}</div>
+    </div>
+    <div class="mb-3{% if form.text.errors %} text-danger{% endif %}">
+        <label for="bugText" class="form-label">Bug details</label>
+	<textarea class="form-control" id="bugText" rows="5" name="text">{% if form.text.value %}{{ form.text.value }}{% endif %}</textarea>
+        <div class="form-text text-danger">{{ form.text.errors }}</div>
+    </div>
+    <div class="mb-3">
+        <button class="btn btn-success" type="submit">Create bug</button>
+    </div>
+</form>
+{% endblock %}

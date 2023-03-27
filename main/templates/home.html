@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block pagecontent %}
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-dismissible fade show {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}alert-danger{% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}alert-success{% endif %}">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
+    {% endfor %}
+{% endif %}
+<ul class="nav nav-tabs">
+    <li class="nav-item">
+        <button class="nav-link{% if tab == "bugs" %} active{% endif %}" data-bs-toggle="tab" data-bs-target="#bugtab">Bugs</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link{% if tab == "people" %} active{% endif %}" data-bs-toggle="tab" data-bs-target="#peopletab">People</button>
+    </li>
+</ul>
+<div class="tab-content">
+    <div class="tab-pane{% if tab == "bugs" %} active{% endif %}" id="bugtab" role="tabpanel" tabindex="0">
+        <h2>Bug list <a class="btn btn-success" href="/newbug">New bug</a></h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Owner</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for bug in bugpage.object_list %}
+                <tr>
+		    <td><a href="{{ bug.get_absolute_url }}">{{ bug.id }}</a></td>
+                    <td>{{ bug.title }}</td>
+                    <td>{{ bug.owner }}</td>
+                    <td>{{ bug.closed|yesno:"Closed,Open,Unknown" }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+	</table>
+        {% if bugpage.has_other_pages %}
+        <nav>
+	    <ul class="pagination">
+	        {% if bugpage.has_previous %}<li class="page-item"><a class="page-link" href="/?bp={{bugpage.previous_page_number}}">Previous</a></li>
+	        <li class="page-item"><a class="page-link" href="/?bp={{bugpage.previous_page_number}}">{{bugpage.previous_page_number}}</a></li>{% endif %}
+	        <li class="page-item disabled"><a class="page-link">{{bugpage.number}}</a></li>
+	        {% if bugpage.has_next %}<li class="page-item"><a class="page-link" href="/?bp={{bugpage.next_page_number}}">{{bugpage.next_page_number}}</a></li>
+	        <li class="page-item"><a class="page-link" href="/?bp={{bugpage.next_page_number}}">Next</a></li>{% endif %}
+	    </ul>
+        </nav>
+    {% endif %}
+    </div>
+    <div class="tab-pane{% if tab == "people" %} active{% endif %}" id="peopletab" role="tabpanel" tabindex="0">
+        <h2>People</h2>
+	<ul>
+            {% for person in peoplepage %}
+	    <li>
+		<form method="POST" action="/person">
+                    <span id="person{{ person.id }}">{{ person }} ({{ person.open_bug_count }} open bug{{ person.open_bug_count|pluralize}})&nbsp;</span>
+                    {% csrf_token %}
+		    <input class="form-control-sm d-none" id="input{{ person.id }}" name="name" value="{{ person }}" />
+		    <input type="hidden" name="personid" value="{{ person.id }}" />
+		    <input type="submit" hidden />
+		    <a href="#" onclick="editperson({{person.id}});" title="Toggle edit"><i class="bi-pencil-square text-success"></i></a>
+		</form>
+	    </li>
+	    {% endfor %}
+	</ul>
+	<form method="POST" action="/newperson" class="row row-cols-lg-auto">
+	    {% csrf_token %}
+	    <div class="col-sm-3">
+	        <input class="form-control form-control-sm" name="name" placeholder="Create person" />
+	    </div>
+	    <button class="btn btn-outline-success" type="submit"><i class="bi-person-plus-fill text-success"></i></button>
+	</form>
+        {% if peoplepage.has_other_pages %}
+        <nav>
+            <ul class="pagination">
+               {% if peoplepage.has_previous %}<li class="page-item"><a class="page-link" href="/?pp={{peoplepage.previous_page_number}}">Previous</a></li>
+               <li class="page-item"><a class="page-link" href="/?pp={{peoplepage.previous_page_number}}">{{peoplepage.previous_page_number}}</a></li>{% endif %}
+               <li class="page-item disabled"><a class="page-link">{{peoplepage.number}}</a></li>
+               {% if peoplepage.has_next %}<li class="page-item"><a class="page-link" href="/?pp={{peoplepage.next_page_number}}">{{peoplepage.next_page_number}}</a></li>
+               <li class="page-item"><a class="page-link" href="/?pp={{peoplepage.next_page_number}}">Next</a></li>{% endif %}
+           </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function editperson(pid) {
+        span = document.getElementById('person'+pid);
+        form = document.getElementById('input'+pid);
+        span.classList.toggle("d-none");
+        form.classList.toggle("d-none");
+    }
+</script>
+{% endblock %}
